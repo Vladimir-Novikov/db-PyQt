@@ -1,24 +1,13 @@
 from socket import socket, AF_INET, SOCK_STREAM
 import time
-import sys
 import argparse
 import pickle
-import logging
 from threading import Thread
 import time
+import dis
 
 
-# from logs import _client_log_config
-# from logs._client_log_decorator import log
-
-"""Раскомментировать этот код в случае применения _client_log_config (без декораторов)"""
-# logger = logging.getLogger("app.client")
-# logger.info("app start")
-
-
-# @log()
 def createParser():
-    # logger.info("parser start")
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", default="7777")
     parser.add_argument("-a", "--addr", default="localhost")
@@ -27,21 +16,16 @@ def createParser():
     return parser
 
 
-# @log("error")
 def myerror(message):
-    # print(f"Применен недопустимый аргумент {message}")
     return f"Применен недопустимый аргумент {message}"
 
 
-# @log()
 def receiving_messages(sock):
     while True:
         raw_data = sock.recv(1024)
         data = pickle.loads(raw_data)
         if "chat" in data:
             print(data["from"], " :: ", data["message"], "\n")
-        # if "quit" in data:
-        #     return False
         elif "msg" in data:
             print(data["to"], "-->", data["msg"], "\n")  # to тк в msg server они поменяны местами
         elif data["response"] > 200:
@@ -50,7 +34,6 @@ def receiving_messages(sock):
             pass
 
 
-# @log()
 def msg_user_to_user(testing=False):
     if testing:
         message = "Hi"
@@ -68,7 +51,6 @@ def msg_user_to_user(testing=False):
     return msg
 
 
-# @log()
 def create_quick_chat(testing=False):
     if testing:
         chat_name = "Test_chat"
@@ -83,7 +65,6 @@ def create_quick_chat(testing=False):
     return msg
 
 
-# @log()
 def msg_to_chat(chat_name, sock, testing=False):
     while True:
         if testing:
@@ -114,7 +95,6 @@ def msg_to_chat(chat_name, sock, testing=False):
             sock.send(pickle.dumps(msg))
 
 
-# @log()
 def user_action(sock):
     while True:
         while True:
@@ -140,22 +120,6 @@ def user_action(sock):
             sock.send(pickle.dumps(chat))
             print(f"Вы в чате {chat_name}, exit для выхода из чата \n")
             msg_to_chat(chat_name, sock)
-
-
-# @log()
-def main():
-    parser = createParser()
-    namespace = parser.parse_args(sys.argv[1:])
-    s = socket(AF_INET, SOCK_STREAM)  # Создать сокет TCP
-    s.connect((namespace.addr, int(namespace.port)))  # Соединиться с сервером
-    if not user_registration(s):  # передаем в функцию сокет, для отправки регистрационных данных
-        print("Клиент закрыт")
-        s.close()
-    else:
-        listen = Thread(target=receiving_messages, args=(s,))
-        listen.start()
-        action = Thread(target=user_action, args=(s,))
-        action.start()
 
 
 def user_registration(sock, testing=False):
@@ -185,56 +149,46 @@ def user_registration(sock, testing=False):
     return True
 
 
+class ClientVerifier(type):
+    def __new__(cls, clsname, bases, clsdict):
+        instructions = []
+        for key in clsdict:
+            try:
+                instr = dis.get_instructions(clsdict[key])
+            except TypeError:
+                pass
+            for item in instr:
+                load_list = ["LOAD_ATTR", "LOAD_METHOD", "LOAD_GLOBAL"]
+                if item.opname in load_list:
+                    instructions.append(item.argval)
+        for wrong_commands in ("accept", "listen"):
+            if wrong_commands in instructions:
+                raise TypeError('В клиенте не может быть вызова "accept" или "listen" для сокета')
+        if "AF_INET" and "SOCK_STREAM" in instructions:
+            pass
+        else:
+            raise TypeError("Попытка создания не TCP/IP сокета")
+        return type.__new__(cls, clsname, bases, clsdict)
+
+
+class Client(metaclass=ClientVerifier):
+    def __init__(self, port=7777, addr="localhost"):
+        self.port = port
+        self.addr = addr
+
+    def create_socket(self):
+        s = socket(AF_INET, SOCK_STREAM)  # Создать сокет TCP
+        s.connect((self.addr, self.port))  # Соединиться с сервером
+        if not user_registration(s):  # передаем в функцию сокет, для отправки регистрационных данных
+            print("Клиент закрыт")
+            s.close()
+        else:
+            listen = Thread(target=receiving_messages, args=(s,))
+            listen.start()
+            action = Thread(target=user_action, args=(s,))
+            action.start()
+
+
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as er:
-        pass
-
-
-"""
-образцы сообщений
-msg = {
-    "action": "authenticate",
-    "time": time.time(),
-    "user": {"account_name": "C0deMaver1ck", "password": "CorrectHorseBatteryStaple"},
-}
-msg = {
-    "action": "quit",
-    "time": time.time(),
-    "type": "status",
-    "user": {"account_name": "C0deMaver1ck", "status": "Yep, I am here!"},
-}
-msg = {
-    "action": "presence",
-    "time": time.time(),
-    "type": "status",
-    "user": {"account_name": "C0deMaver1ck", "status": "Yep, I am here!"},
-}
-msg = {
-    "action": "msg",
-    "time": time.time(),
-    "to": "C0deMaver1ck",
-    "from": "User_1",
-    "encoding": "ascii",
-    "message": "message"
-}
-msg = {
-    "action": "create",
-    "time": time.time(),
-    "from": "C0deMaver1ck",
-    "chat_name": "My_chat",
-}
-msg = {
-    "action": "join",
-    "time": time.time(),
-    "from": "User_1",
-    "chat_name": "My_chat",
-}
-msg = {
-    "action": "leave",
-    "time": time.time(),
-    "from": "User_1",
-    "chat_name": "My_chat",
-}
-"""
+    client = Client()
+    client.create_socket()
