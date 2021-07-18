@@ -1,9 +1,81 @@
 import pickle
 from socket import socket, AF_INET, SOCK_STREAM
 import time
+import datetime
 from select import select
 import argparse
 import dis
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session
+from sqlalchemy import exc
+
+
+# класс работы с БД
+class Storage:
+    engine = create_engine("sqlite:///server_sqlite.db")
+    engine.connect()
+    Base = declarative_base()
+    session = Session(bind=engine)
+
+    class User(Base):
+        __tablename__ = "users"
+        id = Column(Integer, primary_key=True)
+        login = Column(String(100), nullable=False, unique=True)
+        info = Column(String(100), nullable=False)
+        history = relationship("History")
+        contacts = relationship("Contact")
+
+    class History(Base):
+        __tablename__ = "history"
+        id = Column(Integer, primary_key=True)
+        user_id = Column(Integer, ForeignKey("users.id"))
+        ip = Column(String(20))
+        enter_time = Column(DateTime())
+
+    class Contact(Base):
+        __tablename__ = "contacts"
+        id = Column(Integer, primary_key=True)
+        user_id = Column(Integer, ForeignKey("users.id"))
+        friend_id = Column(Integer)
+        friend_name = Column("friend_name", String)
+
+    Base.metadata.create_all(engine)
+
+    def db_write_user(login, info, db=User, engine=engine):
+        session = Session(bind=engine)
+        data = db(login=login, info=info)
+        try:
+            session.add(data)
+            session.commit()
+        except exc.IntegrityError:  # Все имена уникальны, при попытке записать в бд ловим исключение
+            #  в функции authenticate это уже проверяется для текущей сессии
+            pass
+
+    def get_user_id(user_name, db=User, engine=engine):
+        session = Session(bind=engine)
+        user_id = session.query(db.id).filter(db.login == user_name).first()
+        return user_id  # возвращаем ID нужного пользователя
+
+    def db_write_history(user_id, ip, time, db=History, engine=engine):
+        session = Session(bind=engine)
+        data = db(user_id=user_id, ip=ip, enter_time=time)
+        session.add(data)
+        session.commit()
+
+    def db_write_contact(user_id, friend_id, friend_name, db=Contact, engine=engine):
+        session = Session(bind=engine)
+        data = db(user_id=user_id, friend_id=friend_id, friend_name=friend_name)
+        session.add(data)
+        session.commit()
+
+    def friend_exist(user_id, friend_id, db=Contact, engine=engine):
+        session = Session(bind=engine)
+        exist = session.query(db.friend_id).filter(db.user_id == user_id).all()
+        if (friend_id,) in exist:  # сравниваем кортеж со списком кортежей
+            return False
+        return True  # если нет в списке, то вернем True и запишем
 
 
 # обработка командной строки с параметрами
@@ -19,7 +91,7 @@ def myerror(message):
     return f"Применен недопустимый аргумент {message}"
 
 
-def checking_data(r_clients, all_clients):
+def checking_data(r_clients, ip, all_clients):
 
     for sock in r_clients:
         try:
@@ -54,7 +126,7 @@ def checking_data(r_clients, all_clients):
 
             return {"response": 404, "time": time.time(), "error": f"Неизвестная команда {action}"}
         if action == "authenticate":
-            return authenticate(sock, **data)
+            return authenticate(sock, ip, **data)
 
         processing_the_action = dict_of_commands[action]  # находим в словаре обработчик и присваиваем его переменной
 
@@ -65,7 +137,7 @@ authorized_users = {}
 chat_rooms = {}
 
 
-def authenticate(sock, **kwargs):  # пароль не запрашивается на данном этапе разработки
+def authenticate(sock, ip, **kwargs):  # пароль не запрашивается на данном этапе разработки
     user_name = kwargs["user"]["account_name"]
     if user_name in authorized_users:
         return {
@@ -74,6 +146,11 @@ def authenticate(sock, **kwargs):  # пароль не запрашиваетс�
             "alert": f"уже имеется подключение с указанным логином {user_name} ",
             "sock": sock,
         }
+
+    Storage.db_write_user(user_name, "-")  # записываем в БД всех пользователей при авторизации
+    user_id = Storage.get_user_id(user_name)  #  получаем ID юзера
+    now = datetime.datetime.now()
+    Storage.db_write_history(*user_id, ip, now)  # записываем в таблицу history IP и время входа
     authorized_users[user_name] = sock
 
     return {
@@ -100,6 +177,20 @@ def msg(**kwargs):
     from_user = kwargs["from_user"]
     to_user = kwargs["to"]
     message = kwargs["message"]
+
+    # в БД друзей добавляем даже если в данный момент адресат не в сети.
+    # сообщение не будет доставлено, но запись в БД о друге добавим
+    # но в любом случае проверяем есть ли адресат в БД, те. правильное ли имя указал пользователь
+
+    from_user_id = Storage.get_user_id(from_user)  # получаем ID юзера - отправителя (его добавим в друзья)
+    to_user_id = Storage.get_user_id(to_user)  # проверяем есть ли получатель в БД (правильное ли имя),и получаем его ID
+
+    if to_user_id is not None:
+        # проверим нет ли отправителя уже в списке друзей если есть, то не пишем его в БД, если нет - пишем
+        # если True, то нужно записать в список друзей
+        if Storage.friend_exist(*to_user_id, *from_user_id):
+            Storage.db_write_contact(*to_user_id, *from_user_id, from_user)
+
     if from_user not in authorized_users:
         return {
             "response": 401,
@@ -123,7 +214,7 @@ def msg(**kwargs):
         return {
             "response": 404,
             "time": time.time(),
-            "alert": f"Пользователь {to_user} на сервере не зарегистрирован",
+            "alert": f"Пользователь {to_user} не в сети",
             "from": from_user,
         }
 
@@ -317,6 +408,7 @@ class Server(metaclass=ServerVerifier):
 
     def create_socket(self):
         clients = []
+        ip = ""
         with socket(AF_INET, SOCK_STREAM) as s:  # Создает сокет TCP
             s.bind((self.addr, int(self.port)))  # Присваивает порт
             s.listen(5)  # Переходит в режим ожидания запросов Одновременно обслуживает не более 5 запросов.
@@ -324,6 +416,7 @@ class Server(metaclass=ServerVerifier):
             while True:
                 try:
                     conn, addr = s.accept()  # Проверка подключений
+                    ip = addr[0]
                 except OSError as e:
                     pass  # timeout вышел
                 else:
@@ -338,7 +431,7 @@ class Server(metaclass=ServerVerifier):
                     except:
                         pass  # Ничего не делать, если какой-то клиент отключился
 
-                    requests = checking_data(r, clients)  # Сохраним запросы клиентов
+                    requests = checking_data(r, ip, clients)  # Сохраним запросы клиентов
 
                     if requests:
                         write_responses(requests)
@@ -349,3 +442,5 @@ if __name__ == "__main__":
     # при передаче некорректного номера, также используем умолчание = 7777
     server = Server()
     server.create_socket()
+    db_sqlite = Storage()
+    db_sqlite
