@@ -3,8 +3,9 @@ import time
 import argparse
 import pickle
 from threading import Thread
-import time
+import datetime
 import dis
+import sys
 
 
 def createParser():
@@ -42,7 +43,7 @@ def msg_user_to_user(testing=False):
         message = input("Сообщение: ")
     msg = {
         "action": "msg",
-        "time": time.time(),
+        "time": datetime.datetime.now(),
         "to": to,
         "from_user": user_name,
         "encoding": "ascii",
@@ -95,11 +96,47 @@ def msg_to_chat(chat_name, sock, testing=False):
             sock.send(pickle.dumps(msg))
 
 
+def get_contacts():
+    msg = {
+        "action": "get_contacts",
+        "time": time.time(),
+        "from_user": user_name,
+    }
+    return msg
+
+
+def add_contact():
+    contact_name = input("Укажите логин добавляемого друга: \n")
+    msg = {
+        "action": "add_contact",
+        "time": time.time(),
+        "from_user": user_name,
+        "contact_name": contact_name,
+    }
+    return msg
+
+
+def del_contact():
+    contact_name = input("Укажите логин удалаемого друга: \n")
+    msg = {
+        "action": "del_contact",
+        "time": time.time(),
+        "from_user": user_name,
+        "contact_name": contact_name,
+    }
+    return msg
+
+
 def user_action(sock):
     while True:
         while True:
             time.sleep(0.5)  # задерживаем вывод сообщения, для корректного отображения в консоли (в нужном порядке)
-            action = input("Выберите действие: 1 - сообщение пользователю, 2 - общение в чате, exit для выхода: \n")
+            try:
+                action = input(
+                    "Выберите действие: 1 - сообщение пользователю, 2 - общение в чате, 3 - мои контакты, 4 - добавить контакт, 5 - удалить контакт, exit для выхода: \n"
+                )
+            except KeyboardInterrupt:
+                sys.exit()
             if action == "exit":
                 print("Клиент закрыт")
                 msg = {
@@ -108,8 +145,8 @@ def user_action(sock):
                     "user": {"account_name": user_name},
                 }
                 sock.send(pickle.dumps(msg))
-                return False
-            if action in ["1", "2"]:
+                raise SystemExit
+            if action in ["1", "2", "3", "4", "5"]:
                 break
         if action == "1":
             sock.send(pickle.dumps(msg_user_to_user()))
@@ -121,6 +158,18 @@ def user_action(sock):
             print(f"Вы в чате {chat_name}, exit для выхода из чата \n")
             msg_to_chat(chat_name, sock)
 
+        if action == "3":
+            my_contacts = get_contacts()
+            sock.send(pickle.dumps(my_contacts))
+
+        if action == "4":
+            add_cont = add_contact()
+            sock.send(pickle.dumps(add_cont))
+
+        if action == "5":
+            del_cont = del_contact()
+            sock.send(pickle.dumps(del_cont))
+
 
 def user_registration(sock, testing=False):
     global user_name
@@ -130,7 +179,9 @@ def user_registration(sock, testing=False):
         while True:
             user_name = ""  # сбрасываем имя
             while len(user_name) < 2:
+
                 user_name = input("Введите ваше имя: (минимум 2 знака или exit для выхода): ").strip()
+
             if user_name == "exit":  # если exit, то return и в main закрываем сокет
                 return False
             msg = {

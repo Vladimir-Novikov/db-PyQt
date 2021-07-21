@@ -10,11 +10,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
 from sqlalchemy import exc
+from sqlalchemy.sql.functions import user
 
 
 # класс работы с БД
 class Storage:
-    engine = create_engine("sqlite:///server_sqlite.db")
+    engine = create_engine("sqlite:///messenger_sqlite.db")
     engine.connect()
     Base = declarative_base()
     session = Session(bind=engine)
@@ -39,7 +40,14 @@ class Storage:
         id = Column(Integer, primary_key=True)
         user_id = Column(Integer, ForeignKey("users.id"))
         friend_id = Column(Integer)
-        friend_name = Column("friend_name", String)
+
+    class Message(Base):
+        __tablename__ = "messages"
+        id = Column(Integer, primary_key=True)
+        from_user_id = Column(Integer, ForeignKey("users.id"))
+        to_user_id = Column(Integer, ForeignKey("users.id"))
+        message = Column(String(100))
+        time = Column(DateTime())
 
     Base.metadata.create_all(engine)
 
@@ -64,9 +72,9 @@ class Storage:
         session.add(data)
         session.commit()
 
-    def db_write_contact(user_id, friend_id, friend_name, db=Contact, engine=engine):
+    def db_write_contact(user_id, friend_id, db=Contact, engine=engine):
         session = Session(bind=engine)
-        data = db(user_id=user_id, friend_id=friend_id, friend_name=friend_name)
+        data = db(user_id=user_id, friend_id=friend_id)
         session.add(data)
         session.commit()
 
@@ -76,6 +84,35 @@ class Storage:
         if (friend_id,) in exist:  # сравниваем кортеж со списком кортежей
             return False
         return True  # если нет в списке, то вернем True и запишем
+
+    def get_contacts(user_id, db_1=Contact, db_2=User, engine=engine):
+        id_list = []
+        name_list = []
+        session = Session(bind=engine)
+        contacts_id = session.query(db_1.friend_id).filter(db_1.user_id == user_id).all()
+
+        for el in contacts_id:  # создаем лист для вложенного запроса в contacts_name
+            id_list.append(*el)
+
+        contacts_name = session.query(db_2.login).filter(db_2.id.in_(id_list))
+        results = contacts_name.all()
+
+        for name in results:  # создаем лист с именами друзей
+            name_list.append(*name)
+
+        return name_list
+
+    def db_del_contact(user_id, friend_id, db=Contact, engine=engine):
+        session = Session(bind=engine)
+        row_to_del = session.query(db).filter(db.user_id == user_id, db.friend_id == friend_id).one()
+        session.delete(row_to_del)
+        session.commit()
+
+    def db_write_message(from_user, to_user, message, time, db=Message, engine=engine):
+        session = Session(bind=engine)
+        data = db(from_user_id=from_user, to_user_id=to_user, message=message, time=time)
+        session.add(data)
+        session.commit()
 
 
 # обработка командной строки с параметрами
@@ -100,6 +137,7 @@ def checking_data(r_clients, ip, all_clients):
             print("Клиент {} {} отключился".format(sock.fileno(), sock.getpeername()))
             all_clients.remove(sock)
         # если клиент набрал exit, то False, и дальнейшие условия не проверяем (без этого сервер вылетал)
+
         if len(message) == 0:
             return False
 
@@ -119,6 +157,9 @@ def checking_data(r_clients, ip, all_clients):
             "leave": leave,
             "create": create,
             "quick_chat": quick_chat,
+            "get_contacts": get_contacts,
+            "add_contact": add_contact,
+            "del_contact": del_contact,
         }
         data = pickle.loads(message)
         action = data["action"]
@@ -173,11 +214,76 @@ def presence(**kwargs):
     return {"response": 404, "time": time.time(), "error": f"пользователь {user_name} отсутствует на сервере"}
 
 
+def add_contact(**kwargs):
+    from_user = kwargs["from_user"]
+    contact_name = kwargs["contact_name"]
+    from_user_id = Storage.get_user_id(from_user)  # получаем ID юзера - отправителя
+    # проверяем есть ли добавляемое имя в БД (правильное ли имя), и получаем его ID
+    to_user_id = Storage.get_user_id(contact_name)
+
+    if to_user_id is not None and (
+        from_user_id != to_user_id
+    ):  # дополнительно убедимся, что пользователь добавил не себя
+        # проверим нет ли отправителя уже в списке друзей если есть, то не пишем его в БД, если нет - пишем
+        # если True, то нужно записать в список друзей
+        if Storage.friend_exist(*to_user_id, *from_user_id):
+            Storage.db_write_contact(*to_user_id, *from_user_id)
+
+        if Storage.friend_exist(*from_user_id, *to_user_id):  # также отправителю добавляем получателя в друзья
+            Storage.db_write_contact(*from_user_id, *to_user_id)
+
+        return {  # если добавляемый юзер есть в БД, то возвращаем ОК, даже если он уже был в друзьях
+            "response": 202,
+            "time": time.time(),
+            "alert": "OK",
+            "from": from_user,
+        }
+
+    return {  # если добавляемого юзера нет в БД, то возвращаем Предупреждение
+        "response": 400,
+        "time": time.time(),
+        "alert": "Такого пользователя нет на сервере / или указан собственный логин",
+        "from": from_user,
+    }
+
+
+def del_contact(**kwargs):
+    from_user = kwargs["from_user"]
+    contact_name = kwargs["contact_name"]
+    from_user_id = Storage.get_user_id(from_user)  # получаем ID юзера - отправителя
+    to_user_id = Storage.get_user_id(contact_name)  # получаем ID юзера - друга
+
+    if to_user_id is not None and (
+        from_user_id != to_user_id
+    ):  # дополнительно убедимся, что пользователь указал не себя
+        # проверим есть ли друг в списке друзей
+
+        if not Storage.friend_exist(*from_user_id, *to_user_id):  # тк ф-ция возвращает false, если друг найден, то not
+            Storage.db_del_contact(*from_user_id, *to_user_id)
+
+            # отправителя из списка друзей удаленного друга не удаляем
+
+            return {
+                "response": 202,
+                "time": time.time(),
+                "alert": "OK",
+                "from": from_user,
+            }
+
+    return {  # если добавляемого юзера нет в БД, то возвращаем Предупреждение
+        "response": 400,
+        "time": time.time(),
+        "alert": "Такого пользователя нет на сервере или в списке друзей, или указан собственный логин",
+        "from": from_user,
+    }
+
+
 def msg(**kwargs):
     from_user = kwargs["from_user"]
     to_user = kwargs["to"]
     message = kwargs["message"]
-
+    now = kwargs["time"]
+    # в друзья добавляем всех, кто отправил пользователю сообщение (и можно отдельно добавлять см. отдельную ф-цию)
     # в БД друзей добавляем даже если в данный момент адресат не в сети.
     # сообщение не будет доставлено, но запись в БД о друге добавим
     # но в любом случае проверяем есть ли адресат в БД, те. правильное ли имя указал пользователь
@@ -185,11 +291,20 @@ def msg(**kwargs):
     from_user_id = Storage.get_user_id(from_user)  # получаем ID юзера - отправителя (его добавим в друзья)
     to_user_id = Storage.get_user_id(to_user)  # проверяем есть ли получатель в БД (правильное ли имя),и получаем его ID
 
-    if to_user_id is not None:
+    if to_user_id is not None and (
+        from_user_id != to_user_id
+    ):  # дополнительно убедимся, что пользователь отправил сообщение не себе
         # проверим нет ли отправителя уже в списке друзей если есть, то не пишем его в БД, если нет - пишем
         # если True, то нужно записать в список друзей
         if Storage.friend_exist(*to_user_id, *from_user_id):
-            Storage.db_write_contact(*to_user_id, *from_user_id, from_user)
+            Storage.db_write_contact(*to_user_id, *from_user_id)
+
+        if Storage.friend_exist(*from_user_id, *to_user_id):  # также отправителю добавляем получателя в друзья
+            Storage.db_write_contact(*from_user_id, *to_user_id)
+
+        # сохранение сообщений (всех кроме чата) и если получатель указан верно, те. ошибочные не сохраняем
+        # но если получатель есть в бд, но не в сети, то сохраним это сообщение
+        Storage.db_write_message(*from_user_id, *to_user_id, message, now)
 
     if from_user not in authorized_users:
         return {
@@ -225,6 +340,18 @@ def msg(**kwargs):
         "to": from_user,  # from to поменяны местами, тк сообщение нужно доставить не автору, а адресату
         "from": to_user,
         "msg": message,
+    }
+
+
+def get_contacts(**kwargs):
+    from_user = kwargs["from_user"]
+    user_id = Storage.get_user_id(from_user)  # получаем id пользователя - инициатора запроса
+    user_contacts = Storage.get_contacts(*user_id)
+    return {
+        "response": 202,
+        "time": time.time(),
+        "alert": user_contacts,
+        "from": from_user,
     }
 
 
@@ -359,8 +486,11 @@ def write_responses(requests):
                 sock.send(pickle.dumps(requests))
         return
 
-    sock = authorized_users[requests["from"]]  # ответы сервера возвращаем тому, кто отправил запрос
-    sock.send(pickle.dumps(requests))
+    try:
+        sock = authorized_users[requests["from"]]  # ответы сервера возвращаем тому, кто отправил запрос
+        sock.send(pickle.dumps(requests))
+    except ConnectionResetError:  #  [WinError 10054] Удаленный хост принудительно разорвал существующее подключение
+        pass
 
 
 class PortVerifier:
@@ -430,8 +560,10 @@ class Server(metaclass=ServerVerifier):
                         r, w, e = select(clients, [], [], wait)
                     except:
                         pass  # Ничего не делать, если какой-то клиент отключился
-
-                    requests = checking_data(r, ip, clients)  # Сохраним запросы клиентов
+                    try:
+                        requests = checking_data(r, ip, clients)  # Сохраним запросы клиентов
+                    except UnboundLocalError:
+                        pass
 
                     if requests:
                         write_responses(requests)
