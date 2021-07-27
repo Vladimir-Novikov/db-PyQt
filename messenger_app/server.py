@@ -350,7 +350,8 @@ def get_contacts(**kwargs):
     return {
         "response": 202,
         "time": time.time(),
-        "alert": user_contacts,
+        "contacts": user_contacts,
+        # "alert": user_contacts,
         "from": from_user,
     }
 
