@@ -1,6 +1,7 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+
 logger = logging.getLogger("app.server")
 logger.setLevel(logging.INFO)
 

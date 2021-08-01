@@ -1,7 +1,7 @@
-import inspect
 import logging
-import pickle
 from functools import wraps
+import inspect
+import pickle
 
 logger = logging.getLogger("app.server")
 logger.setLevel(logging.INFO)
