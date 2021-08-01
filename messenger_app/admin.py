@@ -1,7 +1,7 @@
-from PyQt5 import uic, QtWidgets, QtSql
-from PyQt5.QtSql import QSqlTableModel, QSqlQuery
 import sys
 
+from PyQt5 import QtSql, QtWidgets, uic
+from PyQt5.QtSql import QSqlQuery, QSqlTableModel
 
 Form, _ = uic.loadUiType("admin.ui")
 

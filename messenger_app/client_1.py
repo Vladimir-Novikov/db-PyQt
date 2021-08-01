@@ -1,14 +1,17 @@
-from socket import socket, AF_INET, SOCK_STREAM
-import time
 import argparse
-import pickle
-from threading import Thread
 import datetime
 import dis
+import hmac
+import os
+import pickle
 import sys
-from PyQt5 import uic, QtWidgets, QtSql, QtCore
-from PyQt5.QtSql import QSqlTableModel, QSqlQuery
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QMessageBox, QLineEdit
+import time
+from socket import AF_INET, SOCK_STREAM, socket
+from threading import Thread
+
+from PyQt5 import QtCore, QtSql, QtWidgets, uic
+from PyQt5.QtSql import QSqlQuery, QSqlTableModel
+from PyQt5.QtWidgets import QApplication, QLineEdit, QMainWindow, QMessageBox, QPushButton, QWidget
 
 
 def createParser():
@@ -42,8 +45,8 @@ def receiving_messages(sock, instance_class_Ui):
             # print(data["to"], "-->", data["msg"], "\n")  # to тк в msg server они поменяны местами
             msg_text = data["to"] + " --> " + data["msg"]
             Ui.users_messages(instance_class_Ui, msg_text)
+
         elif data["response"] > 200:
-            # print(data["alert"], "\n")
             Ui.service_messages(instance_class_Ui, data["alert"])  # передаем экз = self и данные
         else:
             pass
@@ -160,21 +163,22 @@ def user_action(sock, action=0, to_user="", message_text="", login_add_cont=""):
         sock.send(pickle.dumps(del_cont))
 
 
-def user_registration(sock, user_login):
+def user_registration(sock, user_login, user_password):
     global user_name
     user_name = user_login
+    user_pswrd = user_password
     msg = {
         "action": "authenticate",
         "time": time.time(),
-        "user": {"account_name": user_name, "password": ""},
+        "user": {"account_name": user_name, "password": user_pswrd},
     }
     sock.send(pickle.dumps(msg))
     data = sock.recv(1024)
     print(pickle.loads(data)["alert"])
     if pickle.loads(data)["response"] == 200:
-        return True
+        return (True, pickle.loads(data)["is_admin"])
     else:
-        return False
+        return pickle.loads(data)["alert"]
 
 
 class ClientVerifier(type):
@@ -220,6 +224,57 @@ Message_form, _ = uic.loadUiType("message.ui")
 
 Form, _ = uic.loadUiType("client_gui.ui")
 
+Admin_form, _ = uic.loadUiType("admin.ui")
+
+
+class Admin(QtWidgets.QDialog, Admin_form):
+    def __init__(self):
+        super(Admin, self).__init__()
+        self.setupUi(self)
+        self.pushButton.clicked.connect(self.get_file_path)  # обработчик нажатия кнопки
+        self.comboBox.currentTextChanged.connect(self.get_item_combo_box)  # обработчик comboBox
+        self.pushButton_2.clicked.connect(self.get_info)  # обработчик нажатия второй кнопки
+
+    def db_connect(self, filename):  # подключаемся к БД
+        conn = QtSql.QSqlDatabase.addDatabase("QSQLITE")
+        conn.setDatabaseName(filename)
+        conn.open()
+        tables_list = conn.tables()[:]  # список всех таблиц в выбранной БД
+        if "sqlite_sequence" in tables_list:
+            tables_list.remove("sqlite_sequence")  # удаляем служебную таблицу
+        self.combo_box(tables_list)
+
+    def combo_box(self, tables_list):
+        self.comboBox.clear()  # при смене БД комбобокс очищаем
+        self.comboBox.addItems(tables_list)
+
+    def get_item_combo_box(self):  # получаем имя текущей таблицы и передаем его в загрузку в tableView
+        current_db = self.comboBox.currentText()
+        self.load_table(current_db)
+
+    def load_table(self, current_db):
+        model = QSqlTableModel()
+        model.setTable(f"{current_db}")
+        model.setEditStrategy(QSqlTableModel.OnFieldChange)  # указываем стратегию (можно менять данные)
+        self.tableView.setModel(model)
+        model.select()
+
+    def get_file_path(self):
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл БД", "", "*.db *.sqlite *.sqlite3")
+        if filename[0]:  # если нажата кнопка ОТМЕНА, то будет пустой путь
+            self.label.setText((filename[0]))
+            self.db_connect(filename[0])
+
+    def get_info(self):
+        query = QSqlQuery()
+        query = """
+            SELECT users.login as 'Пользователь', count(from_user_id) as 'Сообщений' FROM messages inner join users  on messages.from_user_id = users.id GROUP BY from_user_id;"""
+        q = QSqlQuery(query)
+        model = QSqlTableModel()
+        model.setQuery(q)
+        self.tableView.setModel(model)
+        model.select()
+
 
 class Message_window(QtWidgets.QDialog, Message_form):
     def __init__(self, instance_Ui, recipient):
@@ -243,13 +298,37 @@ class Message_window(QtWidgets.QDialog, Message_form):
 
 
 class Ui(QtWidgets.QDialog, Form):
-    def __init__(self, login):
+    def __init__(self, login, admin):
         super(Ui, self).__init__()
         self.setupUi(self)
         self.login = login
+        self.admin = admin
         self.label.setText(f"Привет {self.login}")
         self.pushButton.clicked.connect(self.show_contacts)  # обработчик нажатия кнопки
         self.pushButton_3.clicked.connect(self.add_contact)
+        self.show_admin()
+        self.pushButton_2.clicked.connect(self.admin_gui_start)
+
+    def admin_gui_start(self):
+        self.w3 = Admin()
+        self.w3.show()
+        # pass
+
+    def login_required(func):
+        def wrapper(self):
+            if self.admin:
+                func(self, True)
+            else:
+                func(self, False)
+
+        return wrapper
+
+    @login_required
+    def show_admin(self, param):
+        if param:
+            self.pushButton_2.show()
+        else:
+            self.pushButton_2.hide()
 
     def show_contacts(self):
         user_action(s, action="3")
@@ -297,25 +376,55 @@ class Login(QtWidgets.QDialog, Login_form):
         super(Login, self).__init__()
         self.setupUi(self)
         self.pushButton.clicked.connect(self.log_in)
+        self.hmac_check = self.client_authenticate()
+
+    def client_authenticate(self):
+        secret_key = b"secret_key"
+        # аутентификация клиента на сервере с помощью hmac (до перехода на страницу сообщений)
+        message = s.recv(32)
+        hash = hmac.new(secret_key, message, digestmod="sha256")
+        digest = hash.digest()
+        s.send(digest)
+        # получаем еще 1 сообщение для установления статуса сервера в окне
+        message = s.recv(32)
+        if message == b"error":
+            self.label_4.setText("Сервер отклонил подключение: hmac error")
+            return False
+        else:
+            return True
 
     def log_in(self):
-        user_login = self.textEdit.toPlainText()
-        if len(user_login) > 2:
-            if user_registration(s, user_login):
-                self.w1 = Ui(user_login)
-                self.w1.show()
-                self.close()
-                # стартуем thread на получение сообщений от сервера + передаем экземпляр класса
-                Client.thread_start(self.w1)
-            else:
-                self.label_5.setText("Этот логин уже занят")
-        self.textEdit.clear()
+        # если не прошли hmac, то закрываем окно при нажатии кнопки ОК
+        if not self.hmac_check:
+            self.setWindowOpacity(0.7)
+            time.sleep(0.3)
+            self.close()
+        else:
+            user_login = self.textEdit.toPlainText()
+            user_password = self.textEdit_2.toPlainText()
+            if len(user_login) > 2 and len(user_password) > 2:
+                # разбираем ответ user_registration и в зависимости от него устанавливаем текст label_5
+                user_registration_response = user_registration(s, user_login, user_password)
+                if user_registration_response[0] == True:
+                    self.w1 = Ui(
+                        user_login, user_registration_response[1]
+                    )  # передаем следующему окну имя юзера и статус - админ/не админ
+                    self.w1.show()
+                    self.close()
+                    # стартуем thread на получение сообщений от сервера + передаем экземпляр класса
+                    Client.thread_start(self.w1)
+
+                else:
+                    self.label_5.setText(user_registration_response)
+            self.textEdit.clear()
+            self.textEdit_2.clear()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    w = Login()
-    w.show()
+
     client = Client()
     client.create_socket()
+    w = Login()
+    w.show()
     sys.exit(app.exec_())
