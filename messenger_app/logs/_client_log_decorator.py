@@ -1,6 +1,6 @@
+import inspect
 import logging
 from functools import wraps
-import inspect
 
 logger = logging.getLogger("app.client")
 logger.setLevel(logging.INFO)
