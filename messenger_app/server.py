@@ -1,15 +1,18 @@
-import pickle
-from socket import socket, AF_INET, SOCK_STREAM
-import time
-import datetime
-from select import select
 import argparse
+import datetime
 import dis
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime
+import hashlib
+import hmac
+import os
+import pickle
+import time
+from select import select
+from socket import AF_INET, SOCK_STREAM, socket
+
+from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String,
+                        create_engine, exc)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import Session
-from sqlalchemy import exc
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import user
 
 
@@ -24,7 +27,10 @@ class Storage:
         __tablename__ = "users"
         id = Column(Integer, primary_key=True)
         login = Column(String(100), nullable=False, unique=True)
+        password = Column(String(100), nullable=False)
+        is_admin = Column(Integer(), nullable=False)
         info = Column(String(100), nullable=False)
+
         history = relationship("History")
         contacts = relationship("Contact")
 
@@ -51,15 +57,21 @@ class Storage:
 
     Base.metadata.create_all(engine)
 
-    def db_write_user(login, info, db=User, engine=engine):
+    def db_write_user(login, password, is_admin, info, db=User, engine=engine):
         session = Session(bind=engine)
-        data = db(login=login, info=info)
+        data = db(login=login, password=password, is_admin=is_admin, info=info)
         try:
             session.add(data)
             session.commit()
         except exc.IntegrityError:  # Все имена уникальны, при попытке записать в бд ловим исключение
             #  в функции authenticate это уже проверяется для текущей сессии
             pass
+
+    # проверяем есть ли записи в таблице users, если нет, то первому юзеру назначаем админа (id мб не обязательно 1, т.к. до этого могли быть удаления юзеров админом и прочее)
+    def users_records_exist(db=User, engine=engine):
+        session = Session(bind=engine)
+        rows_count = session.query(db).count()
+        return rows_count
 
     def get_user_id(user_name, db=User, engine=engine):
         session = Session(bind=engine)
@@ -114,6 +126,19 @@ class Storage:
         session.add(data)
         session.commit()
 
+    def password_check(user_id, hash_password, db=User, engine=engine):
+        session = Session(bind=engine)
+        db_hash_password = session.query(db.password).filter(db.id == user_id).one()
+        # сравниваем два кортежа, для этого hash_password превратили в кортеж
+        return db_hash_password == (hash_password,)
+
+    def db_user_is_admin(user_name, db=User, engine=engine):
+        session = Session(bind=engine)
+        is_user_admin = session.query(db.is_admin).filter(db.login == user_name).one()
+        if is_user_admin == (1,):
+            return True
+        return False
+
 
 # обработка командной строки с параметрами
 def createParser():
@@ -128,6 +153,12 @@ def myerror(message):
     return f"Применен недопустимый аргумент {message}"
 
 
+def get_key(users_dict, value):
+    for k, v in users_dict.items():
+        if v == value:
+            return k
+
+
 def checking_data(r_clients, ip, all_clients):
 
     for sock in r_clients:
@@ -136,6 +167,13 @@ def checking_data(r_clients, ip, all_clients):
         except:
             print("Клиент {} {} отключился".format(sock.fileno(), sock.getpeername()))
             all_clients.remove(sock)
+            # если юзер закрыл программу - удаляем его из списка подключенных
+            user_name_key = get_key(authorized_users, sock)
+            try:
+                del authorized_users[user_name_key]
+            except KeyError:
+                pass
+
         # если клиент набрал exit, то False, и дальнейшие условия не проверяем (без этого сервер вылетал)
 
         if len(message) == 0:
@@ -178,19 +216,59 @@ authorized_users = {}
 chat_rooms = {}
 
 
-def authenticate(sock, ip, **kwargs):  # пароль не запрашивается на данном этапе разработки
-    user_name = kwargs["user"]["account_name"]
-    if user_name in authorized_users:
-        return {
-            "response": 409,
-            "time": time.time(),
-            "alert": f"уже имеется подключение с указанным логином {user_name} ",
-            "sock": sock,
-        }
+def hash_pass(salt, password):  # в качестве соли добавляем имя пользователя
+    hash_password = hashlib.sha256(salt.encode() + password.encode()).hexdigest()
+    return hash_password
 
-    Storage.db_write_user(user_name, "-")  # записываем в БД всех пользователей при авторизации
-    user_id = Storage.get_user_id(user_name)  #  получаем ID юзера
+
+def authenticate(sock, ip, **kwargs):
+    user_name = kwargs["user"]["account_name"]
+    user_password = kwargs["user"]["password"]
+    hash_password = hash_pass(user_name, user_password)
+    user_id = Storage.get_user_id(user_name)  # проверяем есть ли юзер в БД
     now = datetime.datetime.now()
+    if user_id is not None:  # если юзер уже есть в базе - сравниваем хэш паролей
+        if Storage.password_check(*user_id, hash_password):
+            if user_name in authorized_users:
+                # закоментировать этот return если должна быть возможность входа со многих устройств
+                return {
+                    "response": 409,
+                    "time": time.time(),
+                    "alert": f"уже имеется подключение с логином {user_name} ",
+                    "sock": sock,
+                    "from": user_name,
+                }
+
+            Storage.db_write_history(*user_id, ip, now)  # записываем в таблицу history IP и время входа
+            authorized_users[user_name] = sock
+
+            return {
+                "response": 200,
+                "time": time.time(),
+                "alert": f"Пользователь {user_name} успешно авторизован",
+                "from": user_name,
+                "is_admin": Storage.db_user_is_admin(user_name),
+            }
+
+        else:
+            return {
+                "response": 409,
+                "time": time.time(),
+                "alert": "Неправильный пароль",
+                "sock": sock,
+                "from": user_name,
+            }
+
+    # если в таблице users нет записей, то устанавливаем первому юзеру статус админ. В дальнейшем адиминистратор через админку сам сможет назначить администраторов
+    # id мб не обязательно 1, т.к. до этого могли быть удаления юзеров админом и прочее
+    if Storage.users_records_exist() == 0:
+        Storage.db_write_user(login=user_name, password=hash_password, is_admin=1, info="-")
+    else:
+        Storage.db_write_user(
+            login=user_name, password=hash_password, is_admin=0, info="-"
+        )  # записываем в БД всех пользователей при авторизации
+    user_id = Storage.get_user_id(user_name)  #  получаем ID юзера для дальнейших записей в БД
+
     Storage.db_write_history(*user_id, ip, now)  # записываем в таблицу history IP и время входа
     authorized_users[user_name] = sock
 
@@ -199,6 +277,7 @@ def authenticate(sock, ip, **kwargs):  # пароль не запрашивае�
         "time": time.time(),
         "alert": f"Пользователь {user_name} успешно авторизован",
         "from": user_name,
+        "is_admin": Storage.db_user_is_admin(user_name),
     }
 
 
@@ -492,6 +571,8 @@ def write_responses(requests):
         sock.send(pickle.dumps(requests))
     except ConnectionResetError:  #  [WinError 10054] Удаленный хост принудительно разорвал существующее подключение
         pass
+    except KeyError:  # если клиент закрыл свое приложение, то отправлять ответ некому, тк. из authorized_users клиента удалили в ф-ции checking_data
+        pass
 
 
 class PortVerifier:
@@ -531,6 +612,7 @@ class ServerVerifier(type):
 
 
 class Server(metaclass=ServerVerifier):
+
     port = PortVerifier()  # используем дескриптор
 
     def __init__(self, port=7777, addr="0.0.0.0"):
@@ -552,7 +634,12 @@ class Server(metaclass=ServerVerifier):
                     pass  # timeout вышел
                 else:
                     print("Получен запрос на соединение от %s" % str(addr))
-                    clients.append(conn)
+                    # если hmac не пройдена, то закрываем подключение
+                    if not Server.server_authenticate(conn):
+                        print("Клиент %s не прошел аутентификаию hmac" % str(addr))
+                        conn.close()
+                    else:
+                        clients.append(conn)
                 finally:
                     # Проверить наличие событий ввода-вывода
                     wait = 10
@@ -565,9 +652,26 @@ class Server(metaclass=ServerVerifier):
                         requests = checking_data(r, ip, clients)  # Сохраним запросы клиентов
                     except UnboundLocalError:
                         pass
-
                     if requests:
                         write_responses(requests)
+
+    def server_authenticate(conn):
+        secret_key = b"secret_key"
+        message = os.urandom(32)
+        conn.send(message)
+        # 2. Вычисляется HMAC-функция от послания с использованием секретного ключа
+        hash = hmac.new(secret_key, message, digestmod="sha256")
+        digest = hash.digest()
+        # # 3. Пришедший ответ от клиента сравнивается с локальным результатом HMAC
+        response = conn.recv(len(digest))
+        # посылаем клиенту еще 1 сообщение для установления статуса в окне логирования
+        # чтобы клиент увидел статус сервера
+        if hmac.compare_digest(digest, response):
+            status_message = b"ok"
+        else:
+            status_message = b"error"
+        conn.send(status_message)
+        return hmac.compare_digest(digest, response)
 
 
 if __name__ == "__main__":
