@@ -9,11 +9,9 @@ import time
 from select import select
 from socket import AF_INET, SOCK_STREAM, socket
 
-from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String,
-                        create_engine, exc)
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, create_engine, exc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
-from sqlalchemy.sql.functions import user
 
 
 # класс работы с БД
@@ -267,7 +265,7 @@ def authenticate(sock, ip, **kwargs):
         Storage.db_write_user(
             login=user_name, password=hash_password, is_admin=0, info="-"
         )  # записываем в БД всех пользователей при авторизации
-    user_id = Storage.get_user_id(user_name)  #  получаем ID юзера для дальнейших записей в БД
+    user_id = Storage.get_user_id(user_name)  # получаем ID юзера для дальнейших записей в БД
 
     Storage.db_write_history(*user_id, ip, now)  # записываем в таблицу history IP и время входа
     authorized_users[user_name] = sock
@@ -569,7 +567,7 @@ def write_responses(requests):
     try:
         sock = authorized_users[requests["from"]]  # ответы сервера возвращаем тому, кто отправил запрос
         sock.send(pickle.dumps(requests))
-    except ConnectionResetError:  #  [WinError 10054] Удаленный хост принудительно разорвал существующее подключение
+    except ConnectionResetError:  # [WinError 10054] Удаленный хост принудительно разорвал существующее подключение
         pass
     except KeyError:  # если клиент закрыл свое приложение, то отправлять ответ некому, тк. из authorized_users клиента удалили в ф-ции checking_data
         pass
@@ -630,7 +628,7 @@ class Server(metaclass=ServerVerifier):
                 try:
                     conn, addr = s.accept()  # Проверка подключений
                     ip = addr[0]
-                except OSError as e:
+                except OSError:
                     pass  # timeout вышел
                 else:
                     print("Получен запрос на соединение от %s" % str(addr))

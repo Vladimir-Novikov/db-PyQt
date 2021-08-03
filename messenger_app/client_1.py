@@ -2,16 +2,15 @@ import argparse
 import datetime
 import dis
 import hmac
-import os
 import pickle
 import sys
 import time
 from socket import AF_INET, SOCK_STREAM, socket
 from threading import Thread
 
-from PyQt5 import QtCore, QtSql, QtWidgets, uic
+from PyQt5 import QtSql, QtWidgets, uic
 from PyQt5.QtSql import QSqlQuery, QSqlTableModel
-from PyQt5.QtWidgets import QApplication, QLineEdit, QMainWindow, QMessageBox, QPushButton, QWidget
+from PyQt5.QtWidgets import QApplication
 
 
 def createParser():
@@ -405,7 +404,7 @@ class Login(QtWidgets.QDialog, Login_form):
             if len(user_login) > 2 and len(user_password) > 2:
                 # разбираем ответ user_registration и в зависимости от него устанавливаем текст label_5
                 user_registration_response = user_registration(s, user_login, user_password)
-                if user_registration_response[0] == True:
+                if user_registration_response[0]:
                     self.w1 = Ui(
                         user_login, user_registration_response[1]
                     )  # передаем следующему окну имя юзера и статус - админ/не админ
