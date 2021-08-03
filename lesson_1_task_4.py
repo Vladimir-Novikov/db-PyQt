@@ -1,4 +1,4 @@
-from subprocess import Popen, CREATE_NEW_CONSOLE
+from subprocess import CREATE_NEW_CONSOLE, Popen
 
 # в данном скрипте также запускаем сервер, т.к. без него клиенты сразу отключатся
 # на сервере и на клиенте отключил логирование, т.к. с ним не находит путь до файлов логирования

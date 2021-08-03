@@ -9,7 +9,8 @@ import time
 from select import select
 from socket import AF_INET, SOCK_STREAM, socket
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, create_engine, exc
+from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String,
+                        create_engine, exc)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 
@@ -162,7 +163,7 @@ def checking_data(r_clients, ip, all_clients):
     for sock in r_clients:
         try:
             message = sock.recv(1024)
-        except:
+        except Exception:
             print("Клиент {} {} отключился".format(sock.fileno(), sock.getpeername()))
             all_clients.remove(sock)
             # если юзер закрыл программу - удаляем его из списка подключенных
@@ -644,7 +645,7 @@ class Server(metaclass=ServerVerifier):
                     r = []
                     try:
                         r, w, e = select(clients, [], [], wait)
-                    except:
+                    except Exception:
                         pass  # Ничего не делать, если какой-то клиент отключился
                     try:
                         requests = checking_data(r, ip, clients)  # Сохраним запросы клиентов

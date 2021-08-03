@@ -343,9 +343,7 @@ class Ui(QtWidgets.QDialog, Form):
 
     def selecting_recipient(self):
         for recipient in self.listWidget.selectedItems():
-            self.w2 = Message_window(
-                self, recipient.text()
-            )  # передаем в новое окно имя получателя и экз класса (для self)
+            self.w2 = Message_window(self, recipient.text())  # передаем в новое окно имя получателя и экз класса (для self)
             self.w2.show()
 
     def add_contact(self):
@@ -405,9 +403,7 @@ class Login(QtWidgets.QDialog, Login_form):
                 # разбираем ответ user_registration и в зависимости от него устанавливаем текст label_5
                 user_registration_response = user_registration(s, user_login, user_password)
                 if user_registration_response[0]:
-                    self.w1 = Ui(
-                        user_login, user_registration_response[1]
-                    )  # передаем следующему окну имя юзера и статус - админ/не админ
+                    self.w1 = Ui(user_login, user_registration_response[1])  # передаем следующему окну имя юзера и статус - админ/не админ
                     self.w1.show()
                     self.close()
                     # стартуем thread на получение сообщений от сервера + передаем экземпляр класса

@@ -27,7 +27,9 @@ class Ui(QtWidgets.QDialog, Form):
         self.comboBox.clear()  # при смене БД комбобокс очищаем
         self.comboBox.addItems(tables_list)
 
-    def get_item_combo_box(self):  # получаем имя текущей таблицы и передаем его в загрузку в tableView
+    def get_item_combo_box(
+        self,
+    ):  # получаем имя текущей таблицы и передаем его в загрузку в tableView
         current_db = self.comboBox.currentText()
         self.load_table(current_db)
 
@@ -47,7 +49,7 @@ class Ui(QtWidgets.QDialog, Form):
     def get_info(self):
         query = QSqlQuery()
         query = """
-            SELECT users.login as 'Пользователь', count(from_user_id) as 'Сообщений' FROM messages inner join users  on messages.from_user_id = users.id GROUP BY from_user_id;"""
+            SELECT users.login as 'Пользователь', count(from_user_id) as 'Сообщений' FROM messages inner join users on messages.from_user_id = users.id GROUP BY from_user_id;"""
         q = QSqlQuery(query)
         model = QSqlTableModel()
         model.setQuery(q)

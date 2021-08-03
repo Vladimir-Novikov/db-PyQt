@@ -5,8 +5,8 @@
 """
 Qt data models that bind to SQLAlchemy queries
 """
+from PyQt5.QtCore import QAbstractTableModel, Qt, QVariant
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import QAbstractTableModel, QVariant, Qt
 
 
 class AlchemicalTableModel(QAbstractTableModel):
@@ -30,18 +30,18 @@ class AlchemicalTableModel(QAbstractTableModel):
         self.refresh()
 
     def headerData(self, col, orientation, role):
-        """ Данные заголовков для указанной роли role и столбца col """
+        """Данные заголовков для указанной роли role и столбца col"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return QVariant(self.fields[col][0])
         return QVariant()
 
     def setFilter(self, filter):
-        """ Установка/очистка фильтра данных (для очистки filter=None). """
+        """Установка/очистка фильтра данных (для очистки filter=None)."""
         self.filter = filter
         self.refresh()
 
     def refresh(self):
-        """ Пересчет атрибутов self.results и self.count """
+        """Пересчет атрибутов self.results и self.count"""
         self.layoutAboutToBeChanged.emit()
 
         q = self.query
@@ -60,7 +60,7 @@ class AlchemicalTableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     def flags(self, index):
-        """ Набор флагов для элемента с указанным индексом index """
+        """Набор флагов для элемента с указанным индексом index"""
         _flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if self.sort is not None:
             order, col = self.sort
@@ -71,26 +71,26 @@ class AlchemicalTableModel(QAbstractTableModel):
         return _flags
 
     def supportedDropActions(self):
-        """ Поддерживаемые drop-действия при drag&drop операциях """
+        """Поддерживаемые drop-действия при drag&drop операциях"""
         return Qt.MoveAction
 
     def dropMimeData(self, data, action, row, col, parent):
-        """ Управляет данными data в drag&drop операциях при событии action """
+        """Управляет данными data в drag&drop операциях при событии action"""
         if action != Qt.MoveAction:
             return
         return False
 
     def rowCount(self, parent):
-        """ Количество строк """
+        """Количество строк"""
         return self.count or 0
 
     def columnCount(self, parent):
-        """ Количество количество столбцов/полей """
+        """Количество количество столбцов/полей"""
         return len(self.fields)
 
     def data(self, index, role):
 
-        """ Получение данных из запроса """
+        """Получение данных из запроса"""
         if not index.isValid():
             return QVariant()
         elif role not in (Qt.DisplayRole, Qt.EditRole):
@@ -100,7 +100,7 @@ class AlchemicalTableModel(QAbstractTableModel):
         return str(getattr(row, name))
 
     def setData(self, index, value, role=None):
-        """ Установка данных в связанном запросе """
+        """Установка данных в связанном запросе"""
         row = self.results[index.row()]
         name = self.fields[index.column()][2]
         try:
@@ -114,6 +114,6 @@ class AlchemicalTableModel(QAbstractTableModel):
             return True
 
     def sort(self, col, order):
-        """ Сортировка таблицы по указанному номеру столбца. """
+        """Сортировка таблицы по указанному номеру столбца."""
         self.sort = order, col
         self.refresh()
