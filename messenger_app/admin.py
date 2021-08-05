@@ -1,4 +1,6 @@
-import sys
+"""Модуль админка приложения Мессенджер
+В модуле client.py содержится идентичный код, но там его могут использовать
+только пользователи, имеющие статус admin"""
 
 from PyQt5 import QtSql, QtWidgets, uic
 from PyQt5.QtSql import QSqlQuery, QSqlTableModel
@@ -7,6 +9,8 @@ Form, _ = uic.loadUiType("admin.ui")
 
 
 class Ui(QtWidgets.QDialog, Form):
+    """Класс создания графической формы"""
+
     def __init__(self):
         super(Ui, self).__init__()
         self.setupUi(self)
@@ -14,7 +18,8 @@ class Ui(QtWidgets.QDialog, Form):
         self.comboBox.currentTextChanged.connect(self.get_item_combo_box)  # обработчик comboBox
         self.pushButton_2.clicked.connect(self.get_info)  # обработчик нажатия второй кнопки
 
-    def db_connect(self, filename):  # подключаемся к БД
+    def db_connect(self, filename):
+        """Подключаемся к БД"""
         conn = QtSql.QSqlDatabase.addDatabase("QSQLITE")
         conn.setDatabaseName(filename)
         conn.open()
@@ -29,7 +34,8 @@ class Ui(QtWidgets.QDialog, Form):
 
     def get_item_combo_box(
         self,
-    ):  # получаем имя текущей таблицы и передаем его в загрузку в tableView
+    ):
+        """Получаем имя текущей таблицы и передаем его в загрузку в tableView"""
         current_db = self.comboBox.currentText()
         self.load_table(current_db)
 
@@ -47,6 +53,7 @@ class Ui(QtWidgets.QDialog, Form):
             self.db_connect(filename[0])
 
     def get_info(self):
+        """По запросу к БД получает имена всех пользователей и количество отправленных ими сообщений"""
         query = QSqlQuery()
         query = """
             SELECT users.login as 'Пользователь', count(from_user_id) as 'Сообщений' FROM messages inner join users on messages.from_user_id = users.id GROUP BY from_user_id;"""
