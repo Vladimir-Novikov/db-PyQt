@@ -3,13 +3,13 @@
 # Взаимодействие SQLAlchemy и PyQt.
 # Пример использования SQLAlchemy + PyQt
 import sys
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import sessionmaker
-from PyQt5.QtWidgets import QTableView, QWidget, QApplication, QPushButton
-from PyQt5 import QtCore
+
 from alchemical_model import AlchemicalTableModel
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QApplication, QPushButton, QTableView, QWidget
+from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 # ------------- Создание и настройка SQLAlchemy-механизмов ------------------
 eng = create_engine("sqlite:///:memory:")

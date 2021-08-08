@@ -22,9 +22,7 @@ def log(level="info"):
             result = func(*args, **kwargs)
             if main_function != "<module>":
                 if level == "info":
-                    logger.info(
-                        f"Функция {name} вызвана из функции {main_function} с аргументами {args},{kwargs}, результат {result}"
-                    )
+                    logger.info(f"Функция {name} вызвана из функции {main_function} с аргументами {args},{kwargs}, результат {result}")
                 if level == "error":
                     logger.error(
                         f"Функция {name} вызвана из функции {main_function} с аргументами {args},{kwargs}, получена ошибка {result}"

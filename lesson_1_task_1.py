@@ -1,5 +1,5 @@
-import subprocess
 import ipaddress
+import subprocess
 
 
 def host_ping(addr_list):

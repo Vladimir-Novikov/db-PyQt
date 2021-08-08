@@ -1,4 +1,6 @@
-import argparse
+"""Модуль серверной части приложения Мессенджер"""
+
+
 import datetime
 import dis
 import hashlib
@@ -9,15 +11,16 @@ import time
 from select import select
 from socket import AF_INET, SOCK_STREAM, socket
 
-from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String,
-                        create_engine, exc)
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, create_engine, exc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
-from sqlalchemy.sql.functions import user
 
 
-# класс работы с БД
 class Storage:
+    """Класс работы с БД.
+    Создает соединение, таблицы.
+    Содержит методы работы с БД."""
+
     engine = create_engine("sqlite:///messenger_sqlite.db")
     engine.connect()
     Base = declarative_base()
@@ -58,6 +61,7 @@ class Storage:
     Base.metadata.create_all(engine)
 
     def db_write_user(login, password, is_admin, info, db=User, engine=engine):
+        """Получает параметры и записывает данные о пользователе в таблицу users"""
         session = Session(bind=engine)
         data = db(login=login, password=password, is_admin=is_admin, info=info)
         try:
@@ -67,30 +71,36 @@ class Storage:
             #  в функции authenticate это уже проверяется для текущей сессии
             pass
 
-    # проверяем есть ли записи в таблице users, если нет, то первому юзеру назначаем админа (id мб не обязательно 1, т.к. до этого могли быть удаления юзеров админом и прочее)
     def users_records_exist(db=User, engine=engine):
+        """Проверяет есть ли записи в таблице users, если нет, то первому юзеру назначает админа.
+        id может быть не обязательно 1, т.к. до этого могли быть удаления юзеров админом и прочее"""
         session = Session(bind=engine)
         rows_count = session.query(db).count()
         return rows_count
 
     def get_user_id(user_name, db=User, engine=engine):
+        """Получает имя пользователя, возвращает его id или None"""
         session = Session(bind=engine)
         user_id = session.query(db.id).filter(db.login == user_name).first()
         return user_id  # возвращаем ID нужного пользователя
 
     def db_write_history(user_id, ip, time, db=History, engine=engine):
+        """Записывает в таблицу history историю входа пользователей"""
         session = Session(bind=engine)
         data = db(user_id=user_id, ip=ip, enter_time=time)
         session.add(data)
         session.commit()
 
     def db_write_contact(user_id, friend_id, db=Contact, engine=engine):
+        """Записывает в таблицу contacts друзей"""
         session = Session(bind=engine)
         data = db(user_id=user_id, friend_id=friend_id)
         session.add(data)
         session.commit()
 
     def friend_exist(user_id, friend_id, db=Contact, engine=engine):
+        """Получает id пользователя и id его возможного друга.
+        Проверяет есть ли у пользователя в списке этот друг."""
         session = Session(bind=engine)
         exist = session.query(db.friend_id).filter(db.user_id == user_id).all()
         if (friend_id,) in exist:  # сравниваем кортеж со списком кортежей
@@ -98,6 +108,7 @@ class Storage:
         return True  # если нет в списке, то вернем True и запишем
 
     def get_contacts(user_id, db_1=Contact, db_2=User, engine=engine):
+        """Возвращает список контактов пользователя"""
         id_list = []
         name_list = []
         session = Session(bind=engine)
@@ -115,24 +126,29 @@ class Storage:
         return name_list
 
     def db_del_contact(user_id, friend_id, db=Contact, engine=engine):
+        """Удаляет пользователя из списка друзей"""
         session = Session(bind=engine)
         row_to_del = session.query(db).filter(db.user_id == user_id, db.friend_id == friend_id).one()
         session.delete(row_to_del)
         session.commit()
 
     def db_write_message(from_user, to_user, message, time, db=Message, engine=engine):
+        """Записывает в таблицу messages сообщения"""
         session = Session(bind=engine)
         data = db(from_user_id=from_user, to_user_id=to_user, message=message, time=time)
         session.add(data)
         session.commit()
 
     def password_check(user_id, hash_password, db=User, engine=engine):
+        """Проверка пароля.
+        Получает id пользователя и hash пароля, извлекает из БД hash, возвращает результат сравнения двух паролей"""
         session = Session(bind=engine)
         db_hash_password = session.query(db.password).filter(db.id == user_id).one()
         # сравниваем два кортежа, для этого hash_password превратили в кортеж
         return db_hash_password == (hash_password,)
 
     def db_user_is_admin(user_name, db=User, engine=engine):
+        """Возвращает булево значение является ли пользователь администратором"""
         session = Session(bind=engine)
         is_user_admin = session.query(db.is_admin).filter(db.login == user_name).one()
         if is_user_admin == (1,):
@@ -140,31 +156,22 @@ class Storage:
         return False
 
 
-# обработка командной строки с параметрами
-def createParser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--port", default="7777")
-    parser.add_argument("-a", "--addr", default="0.0.0.0")
-    parser.error = myerror
-    return parser
-
-
-def myerror(message):
-    return f"Применен недопустимый аргумент {message}"
-
-
 def get_key(users_dict, value):
+    """Получает key словаря authorized_users для функции checking_data,
+    для дальнейшего удаления этого ключа из списка подключенных пользователей"""
     for k, v in users_dict.items():
         if v == value:
             return k
 
 
 def checking_data(r_clients, ip, all_clients):
+    """Главная функция приложения, распределяющая сообщения по остальным функциям.
+    Получает сообщение, разбирает его и запускает соответсвующую функцию"""
 
     for sock in r_clients:
         try:
             message = sock.recv(1024)
-        except:
+        except Exception:
             print("Клиент {} {} отключился".format(sock.fileno(), sock.getpeername()))
             all_clients.remove(sock)
             # если юзер закрыл программу - удаляем его из списка подключенных
@@ -188,13 +195,7 @@ def checking_data(r_clients, ip, all_clients):
 
         dict_of_commands = {
             "authenticate": authenticate,
-            "presence": presence,
             "msg": msg,
-            "quit": quit_s,  # т.к. в python есть ф-ция quit - определил для ф-ции другое имя
-            "join": join,
-            "leave": leave,
-            "create": create,
-            "quick_chat": quick_chat,
             "get_contacts": get_contacts,
             "add_contact": add_contact,
             "del_contact": del_contact,
@@ -216,12 +217,16 @@ authorized_users = {}
 chat_rooms = {}
 
 
-def hash_pass(salt, password):  # в качестве соли добавляем имя пользователя
+def hash_pass(salt, password):
+    """Получает имя пользователя в качестве соли и пароль.
+    Возвращает преобразованный hash пароль."""
     hash_password = hashlib.sha256(salt.encode() + password.encode()).hexdigest()
     return hash_password
 
 
 def authenticate(sock, ip, **kwargs):
+    """Аутентификация пользователя.
+    Вызываются функции сравнения hash, записи в БД и другие."""
     user_name = kwargs["user"]["account_name"]
     user_password = kwargs["user"]["password"]
     hash_password = hash_pass(user_name, user_password)
@@ -267,7 +272,7 @@ def authenticate(sock, ip, **kwargs):
         Storage.db_write_user(
             login=user_name, password=hash_password, is_admin=0, info="-"
         )  # записываем в БД всех пользователей при авторизации
-    user_id = Storage.get_user_id(user_name)  #  получаем ID юзера для дальнейших записей в БД
+    user_id = Storage.get_user_id(user_name)  # получаем ID юзера для дальнейших записей в БД
 
     Storage.db_write_history(*user_id, ip, now)  # записываем в таблицу history IP и время входа
     authorized_users[user_name] = sock
@@ -281,19 +286,8 @@ def authenticate(sock, ip, **kwargs):
     }
 
 
-def presence(**kwargs):
-    user_name = kwargs["user"]["account_name"]
-    if user_name in authorized_users:
-
-        return {
-            "response": 200,
-            "time": time.time(),
-            "alert": f"Хорошо, {user_name} присутсвует в списке подключенных пользователей",
-        }
-    return {"response": 404, "time": time.time(), "error": f"пользователь {user_name} отсутствует на сервере"}
-
-
 def add_contact(**kwargs):
+    """Добавление контакта в список друзей с проверкой, что введен не собственный логин"""
     from_user = kwargs["from_user"]
     contact_name = kwargs["contact_name"]
     from_user_id = Storage.get_user_id(from_user)  # получаем ID юзера - отправителя
@@ -327,6 +321,7 @@ def add_contact(**kwargs):
 
 
 def del_contact(**kwargs):
+    """Удаляет друга из контактов"""
     from_user = kwargs["from_user"]
     contact_name = kwargs["contact_name"]
     from_user_id = Storage.get_user_id(from_user)  # получаем ID юзера - отправителя
@@ -358,6 +353,7 @@ def del_contact(**kwargs):
 
 
 def msg(**kwargs):
+    """Обрабатывает сообщения пользователей друг другу"""
     from_user = kwargs["from_user"]
     to_user = kwargs["to"]
     message = kwargs["message"]
@@ -423,6 +419,7 @@ def msg(**kwargs):
 
 
 def get_contacts(**kwargs):
+    """Получение списка контактов пользователя, запуская функцию из класса Storage"""
     from_user = kwargs["from_user"]
     user_id = Storage.get_user_id(from_user)  # получаем id пользователя - инициатора запроса
     user_contacts = Storage.get_contacts(*user_id)
@@ -430,154 +427,30 @@ def get_contacts(**kwargs):
         "response": 202,
         "time": time.time(),
         "contacts": user_contacts,
-        # "alert": user_contacts,
         "from": from_user,
     }
 
 
-def quit_s(**kwargs):
-    user_name = kwargs["user"]["account_name"]
-    if user_name in authorized_users:
-
-        # т.к. пользователя из словаря мы удалили, получим его сокет для отправки сообщения
-        sock = authorized_users.pop(user_name, None)
-
-        return {
-            "response": 200,
-            "time": time.time(),
-            "sock": sock,
-            "quit": True,
-        }  # передаем ключ quit для завершения потока
-
-
-def quick_chat(**kwargs):
-    chat_name = kwargs["chat_name"]
-    user = kwargs["from"]
-    if chat_name in chat_rooms:
-        if user not in chat_rooms[chat_name]:
-            chat_rooms[chat_name].append(user)
-            return {
-                "response": 200,
-                "time": time.time(),
-                "alert": f"Пользователь {user} добавлен в {chat_name} ",
-                "from": user,
-            }
-        return {
-            "response": 200,
-            "time": time.time(),
-            "alert": f"Пользователь {user} уже в чате {chat_name} ",
-            "from": user,
-        }
-
-    chat_rooms[chat_name] = [user]
-    return {
-        "response": 200,
-        "time": time.time(),
-        "alert": f"Создан чат {chat_name} с пользователем {user}",
-        "from": user,
-    }
-
-
-def join(**kwargs):
-    chat_name = kwargs["chat_name"]
-    user = kwargs["from"]
-    if user not in authorized_users:
-        return {"response": 404, "time": time.time(), "error": f"пользователь {user} отсутствует на сервере"}
-    if chat_name in chat_rooms:
-        if user not in chat_rooms[chat_name]:
-            chat_rooms[chat_name].append(user)
-            return {
-                "response": 200,
-                "time": time.time(),
-                "alert": f"Пользователь {user} добавлен в {chat_name} ",
-            }
-
-        return {
-            "response": 409,
-            "time": time.time(),
-            "error": f"Пользователь {user} уже присутствует в чате {chat_name}  ",
-        }
-    return {
-        "response": 409,
-        "time": time.time(),
-        "error": f"Чат {chat_name} пока не создан",
-    }
-
-
-def leave(**kwargs):
-    chat_name = kwargs["chat_name"]
-    user = kwargs["from_user"]
-    if user not in authorized_users:
-
-        return {"response": 404, "time": time.time(), "error": f"пользователь {user} отсутствует на сервере"}
-    if chat_name in chat_rooms:
-
-        if user in chat_rooms[chat_name]:
-
-            chat_rooms[chat_name].remove(user)
-
-            return {
-                "response": 200,
-                "time": time.time(),
-                "alert": f"Пользователь {user} вышел из чата",
-                "message": f"Пользователь {user} вышел из чата",  # эта строка для показа в чате всем пользователям
-                "from": user,
-                "chat": chat_name,
-            }
-        return {
-            "response": 409,
-            "time": time.time(),
-            "error": f"Пользователя {user} нет в чате {chat_name}  ",
-        }
-    return {
-        "response": 409,
-        "time": time.time(),
-        "error": f"Чат {chat_name} пока не создан",
-    }
-
-
-def create(**kwargs):
-    chat_name = kwargs["chat_name"]
-    user = kwargs["from"]
-    if user not in authorized_users:
-        return {"response": 404, "time": time.time(), "error": f"пользователь {user} отсутствует на сервере"}
-    if chat_name in chat_rooms:
-        return {
-            "response": 409,
-            "time": time.time(),
-            "alert": f"уже имеется чат с указанным названием {chat_name} ",
-        }
-    chat_rooms[chat_name] = [user]  # создаем чат и список его участников
-    return {"response": 200, "time": time.time(), "alert": f"Чат {chat_name} успешно создан"}
-
-
 def write_responses(requests):
+    """Высылает сообщения пользователю"""
     if "sock" in requests:  # если имя пользователя уже занято или он отключился, то ответ возвращаем по сокету.
         sock = requests.pop("sock", None)
         sock.send(pickle.dumps(requests))
         return
 
-    if "chat" in requests:  # сообщение в чат
-        author = authorized_users[requests["from"]]  # сокет автора сообщения (отсылаем всем, кроме него)
-        list_of_users = chat_rooms[requests["chat"]]  # получаем список участников чата
-        for user_name in list_of_users:  # проходимся списку пользователей, для получения сокета и последующей отправки
-            sock = authorized_users[user_name]
-            if sock != author:
-                sock.send(pickle.dumps(requests))
-        return
-
     try:
         sock = authorized_users[requests["from"]]  # ответы сервера возвращаем тому, кто отправил запрос
         sock.send(pickle.dumps(requests))
-    except ConnectionResetError:  #  [WinError 10054] Удаленный хост принудительно разорвал существующее подключение
+    except ConnectionResetError:  # [WinError 10054] Удаленный хост принудительно разорвал существующее подключение
         pass
     except KeyError:  # если клиент закрыл свое приложение, то отправлять ответ некому, тк. из authorized_users клиента удалили в ф-ции checking_data
         pass
 
 
 class PortVerifier:
-    # дескриптор, проверяющий значение номера порта
-    # если значение выходит за установленные рамки, то используем умолчание = 7777
+    """Дескриптор, проверяющий значение номера порта
+    если значение выходит за установленные рамки, то используем умолчание = 7777"""
+
     def __get__(self, instance, owner):
         return instance.__dict__[self.name]
 
@@ -591,6 +464,8 @@ class PortVerifier:
 
 
 class ServerVerifier(type):
+    """Метакласс проверки, что класс Server не содержит некорректных для серверной части вызовов, и что создается TCP/IP сокет"""
+
     def __new__(cls, clsname, bases, clsdict):
         instructions = []
         for key in clsdict:
@@ -616,10 +491,12 @@ class Server(metaclass=ServerVerifier):
     port = PortVerifier()  # используем дескриптор
 
     def __init__(self, port=7777, addr="0.0.0.0"):
+        """Указание порта и адреса приложения"""
         self.port = port
         self.addr = addr
 
     def create_socket(self):
+        """Создание сокета"""
         clients = []
         ip = ""
         with socket(AF_INET, SOCK_STREAM) as s:  # Создает сокет TCP
@@ -630,7 +507,7 @@ class Server(metaclass=ServerVerifier):
                 try:
                     conn, addr = s.accept()  # Проверка подключений
                     ip = addr[0]
-                except OSError as e:
+                except OSError:
                     pass  # timeout вышел
                 else:
                     print("Получен запрос на соединение от %s" % str(addr))
@@ -646,7 +523,7 @@ class Server(metaclass=ServerVerifier):
                     r = []
                     try:
                         r, w, e = select(clients, [], [], wait)
-                    except:
+                    except Exception:
                         pass  # Ничего не делать, если какой-то клиент отключился
                     try:
                         requests = checking_data(r, ip, clients)  # Сохраним запросы клиентов
@@ -656,13 +533,14 @@ class Server(metaclass=ServerVerifier):
                         write_responses(requests)
 
     def server_authenticate(conn):
+        """Аутентификация клиента на сервере с помощью hmac"""
         secret_key = b"secret_key"
         message = os.urandom(32)
         conn.send(message)
-        # 2. Вычисляется HMAC-функция от послания с использованием секретного ключа
+        # Вычисляется HMAC-функция от послания с использованием секретного ключа
         hash = hmac.new(secret_key, message, digestmod="sha256")
         digest = hash.digest()
-        # # 3. Пришедший ответ от клиента сравнивается с локальным результатом HMAC
+        # Пришедший ответ от клиента сравнивается с локальным результатом HMAC
         response = conn.recv(len(digest))
         # посылаем клиенту еще 1 сообщение для установления статуса в окне логирования
         # чтобы клиент увидел статус сервера

@@ -1,9 +1,9 @@
 import sys
-from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 
-import slider
 import progress
+import slider
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 
 class SliderDialog(QtWidgets.QDialog):
@@ -37,9 +37,6 @@ class ProgressDialog(QtWidgets.QDialog):
         # Связываем "свой" сигнал со "своим" слотом
         slider_object.changedValue.connect(self.get_slider_value)
 
-
-import sys
-from PyQt5 import QtGui, QtWidgets
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
