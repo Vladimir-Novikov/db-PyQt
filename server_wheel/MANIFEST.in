@@ -1,0 +1,10 @@
+include src/requirements.txt
+include src/documentation/.buildinfo
+include src/readme.md
+recursive-include src/documentation *.html
+recursive-include src/documentation *.js
+recursive-include src/documentation *.inv
+recursive-include src/documentation/_sources *
+recursive-include src/documentation/.doctrees *
+recursive-include src/documentation/_static *
+recursive-include src/documentation/_images *
