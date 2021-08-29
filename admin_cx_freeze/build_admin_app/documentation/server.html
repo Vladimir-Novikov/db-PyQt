@@ -1,0 +1,539 @@
+
+<!DOCTYPE html>
+
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="lang:clipboard.copy" content="Copy to clipboard">
+  <meta name="lang:clipboard.copied" content="Copied to clipboard">
+  <meta name="lang:search.language" content="en">
+  <meta name="lang:search.pipeline.stopwords" content="True">
+  <meta name="lang:search.pipeline.trimmer" content="True">
+  <meta name="lang:search.result.none" content="No matching documents">
+  <meta name="lang:search.result.one" content="1 matching document">
+  <meta name="lang:search.result.other" content="# matching documents">
+  <meta name="lang:search.tokenizer" content="[\s\-]+">
+
+  
+    <link href="https://fonts.gstatic.com/" rel="preconnect" crossorigin>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,500,700|Roboto:300,400,400i,700&display=fallback" rel="stylesheet">
+
+    <style>
+      body,
+      input {
+        font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif
+      }
+
+      code,
+      kbd,
+      pre {
+        font-family: "Roboto Mono", "Courier New", Courier, monospace
+      }
+    </style>
+  
+
+  <link rel="stylesheet" href="_static/stylesheets/application.css"/>
+  <link rel="stylesheet" href="_static/stylesheets/application-palette.css"/>
+  <link rel="stylesheet" href="_static/stylesheets/application-fixes.css"/>
+  
+  <link rel="stylesheet" href="_static/fonts/material-icons.css"/>
+  
+  <meta name="theme-color" content="#3f51b5">
+  <script src="_static/javascripts/modernizr.js"></script>
+  
+  
+  
+    <title>server module &#8212; документация messenger_app </title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/material.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/translations.js"></script>
+    <link rel="index" title="Алфавитный указатель" href="genindex.html" />
+    <link rel="search" title="Поиск" href="search.html" />
+    <link rel="prev" title="client_1 module" href="client_1.html" />
+  
+   
+
+  </head>
+  <body dir=ltr
+        data-md-color-primary=blue-grey data-md-color-accent=blue>
+  
+  <svg class="md-svg">
+    <defs data-children-count="0">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+      
+    </defs>
+  </svg>
+  
+  <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer">
+  <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search">
+  <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+  <a href="#server" tabindex="1" class="md-skip"> Skip to content </a>
+  <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex navheader">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="index.html" title="документация messenger_app "
+           class="md-header-nav__button md-logo">
+          
+            &nbsp;
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          <span class="md-header-nav__topic">документация messenger_app </span>
+          <span class="md-header-nav__topic"> server module </span>
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+        
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" action="search.html" method="get" name="search">
+      <input type="text" class="md-search__input" name="q" placeholder="Search"
+             autocapitalize="off" autocomplete="off" spellcheck="false"
+             data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      </div>
+      
+      
+  
+  <script src="_static/javascripts/version_dropdown.js"></script>
+  <script>
+    var json_loc = ""versions.json"",
+        target_loc = "../",
+        text = "Versions";
+    $( document ).ready( add_version_dropdown(json_loc, target_loc, text));
+  </script>
+  
+
+    </div>
+  </nav>
+</header>
+
+  
+  <div class="md-container">
+    
+    
+    
+  <nav class="md-tabs" data-md-component="tabs">
+    <div class="md-tabs__inner md-grid">
+      <ul class="md-tabs__list">
+          <li class="md-tabs__item"><a href="index.html" class="md-tabs__link">документация messenger_app </a></li>
+          <li class="md-tabs__item"><a href="modules.html" class="md-tabs__link">messenger_app</a></li>
+      </ul>
+    </div>
+  </nav>
+    <main class="md-main">
+      <div class="md-main__inner md-grid" data-md-component="container">
+        
+          <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+            <div class="md-sidebar__scrollwrap">
+              <div class="md-sidebar__inner">
+                <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="index.html" title="документация messenger_app" class="md-nav__button md-logo">
+      
+        <img src="_static/" alt=" logo" width="48" height="48">
+      
+    </a>
+    <a href="index.html"
+       title="документация messenger_app">документация messenger_app </a>
+  </label>
+  
+
+</nav>
+              </div>
+            </div>
+          </div>
+          <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+            <div class="md-sidebar__scrollwrap">
+              <div class="md-sidebar__inner">
+                
+<nav class="md-nav md-nav--secondary">
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+<li class="md-nav__item"><a class="md-nav__extra_link" href="_sources/server.rst.txt">Исходный текст</a> </li>
+
+<li id="searchbox" class="md-nav__item"></li>
+
+  </ul>
+</nav>
+              </div>
+            </div>
+          </div>
+        
+        <div class="md-content">
+          <article class="md-content__inner md-typeset" role="main">
+            
+  <section id="module-server">
+<span id="server-module"></span><h1 id="server--page-root">server module<a class="headerlink" href="#server--page-root" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Модуль серверной части приложения Мессенджер</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.PortVerifier">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">PortVerifier</span></span><a class="headerlink" href="#server.PortVerifier" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<p>Дескриптор, проверяющий значение номера порта
+если значение выходит за установленные рамки, то используем умолчание = 7777</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.Server">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">Server</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7777</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">addr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.0.0.0'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Server" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Server.create_socket">
+<span class="sig-name descname"><span class="pre">create_socket</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.Server.create_socket" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Создание сокета</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Server.port">
+<span class="sig-name descname"><span class="pre">port</span></span><a class="headerlink" href="#server.Server.port" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Дескриптор, проверяющий значение номера порта
+если значение выходит за установленные рамки, то используем умолчание = 7777</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Server.server_authenticate">
+<span class="sig-name descname"><span class="pre">server_authenticate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.Server.server_authenticate" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Аутентификация клиента на сервере с помощью hmac</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.ServerVerifier">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">ServerVerifier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clsname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clsdict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.ServerVerifier" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</div></blockquote>
+<p>Метакласс проверки, что класс Server не содержит некорректных для серверной части вызовов, и что создается TCP/IP сокет</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.Storage">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">Storage</span></span><a class="headerlink" href="#server.Storage" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<p>Класс работы с БД.
+Создает соединение, таблицы.
+Содержит методы работы с БД.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.Storage.Base">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">Base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.Base" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<p>The base class of the class hierarchy.</p>
+<p>When called, it accepts no arguments and returns a new featureless
+instance that has no instance attributes and cannot be given any.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Base.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"> <span class="pre">=</span> <span class="pre">MetaData()</span></em><a class="headerlink" href="#server.Storage.Base.metadata" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Base.registry">
+<span class="sig-name descname"><span class="pre">registry</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;sqlalchemy.orm.decl_api.registry</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#server.Storage.Base.registry" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.Storage.Contact">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">Contact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.Contact" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <a class="reference internal" href="#server.Storage.Base" title="sqlalchemy.orm.decl_api.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.orm.decl_api.Base</span></code></a></p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Contact.friend_id">
+<span class="sig-name descname"><span class="pre">friend_id</span></span><a class="headerlink" href="#server.Storage.Contact.friend_id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Contact.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#server.Storage.Contact.id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Contact.user_id">
+<span class="sig-name descname"><span class="pre">user_id</span></span><a class="headerlink" href="#server.Storage.Contact.user_id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.Storage.History">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">History</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.History" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <a class="reference internal" href="#server.Storage.Base" title="sqlalchemy.orm.decl_api.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.orm.decl_api.Base</span></code></a></p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.History.enter_time">
+<span class="sig-name descname"><span class="pre">enter_time</span></span><a class="headerlink" href="#server.Storage.History.enter_time" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.History.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#server.Storage.History.id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.History.ip">
+<span class="sig-name descname"><span class="pre">ip</span></span><a class="headerlink" href="#server.Storage.History.ip" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.History.user_id">
+<span class="sig-name descname"><span class="pre">user_id</span></span><a class="headerlink" href="#server.Storage.History.user_id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.Storage.Message">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">Message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.Message" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <a class="reference internal" href="#server.Storage.Base" title="sqlalchemy.orm.decl_api.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.orm.decl_api.Base</span></code></a></p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Message.from_user_id">
+<span class="sig-name descname"><span class="pre">from_user_id</span></span><a class="headerlink" href="#server.Storage.Message.from_user_id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Message.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#server.Storage.Message.id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Message.message">
+<span class="sig-name descname"><span class="pre">message</span></span><a class="headerlink" href="#server.Storage.Message.message" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Message.time">
+<span class="sig-name descname"><span class="pre">time</span></span><a class="headerlink" href="#server.Storage.Message.time" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.Message.to_user_id">
+<span class="sig-name descname"><span class="pre">to_user_id</span></span><a class="headerlink" href="#server.Storage.Message.to_user_id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="server.Storage.User">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">User</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.User" title="Ссылка на это определение">¶</a></dt>
+<dd><blockquote>
+<div><p>Базовые классы: <a class="reference internal" href="#server.Storage.Base" title="sqlalchemy.orm.decl_api.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.orm.decl_api.Base</span></code></a></p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.User.contacts">
+<span class="sig-name descname"><span class="pre">contacts</span></span><a class="headerlink" href="#server.Storage.User.contacts" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.User.history">
+<span class="sig-name descname"><span class="pre">history</span></span><a class="headerlink" href="#server.Storage.User.history" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.User.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#server.Storage.User.id" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.User.info">
+<span class="sig-name descname"><span class="pre">info</span></span><a class="headerlink" href="#server.Storage.User.info" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.User.is_admin">
+<span class="sig-name descname"><span class="pre">is_admin</span></span><a class="headerlink" href="#server.Storage.User.is_admin" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.User.login">
+<span class="sig-name descname"><span class="pre">login</span></span><a class="headerlink" href="#server.Storage.User.login" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.User.password">
+<span class="sig-name descname"><span class="pre">password</span></span><a class="headerlink" href="#server.Storage.User.password" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.db_del_contact">
+<span class="sig-name descname"><span class="pre">db_del_contact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">friend_id</span></em>, <em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.Contact'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.db_del_contact" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Удаляет пользователя из списка друзей</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.db_user_is_admin">
+<span class="sig-name descname"><span class="pre">db_user_is_admin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.User'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.db_user_is_admin" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Возвращает булево значение является ли пользователь администратором</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.db_write_contact">
+<span class="sig-name descname"><span class="pre">db_write_contact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">friend_id</span></em>, <em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.Contact'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.db_write_contact" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Записывает в таблицу contacts друзей</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.db_write_history">
+<span class="sig-name descname"><span class="pre">db_write_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">ip</span></em>, <em class="sig-param"><span class="pre">time</span></em>, <em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.History'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.db_write_history" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Записывает в таблицу history историю входа пользователей</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.db_write_message">
+<span class="sig-name descname"><span class="pre">db_write_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">to_user</span></em>, <em class="sig-param"><span class="pre">message</span></em>, <em class="sig-param"><span class="pre">time</span></em>, <em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.Message'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.db_write_message" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Записывает в таблицу messages сообщения</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.db_write_user">
+<span class="sig-name descname"><span class="pre">db_write_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">password</span></em>, <em class="sig-param"><span class="pre">is_admin</span></em>, <em class="sig-param"><span class="pre">info</span></em>, <em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.User'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.db_write_user" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Получает параметры и записывает данные о пользователе в таблицу users</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Engine(sqlite:///messenger_sqlite.db)</span></em><a class="headerlink" href="#server.Storage.engine" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.friend_exist">
+<span class="sig-name descname"><span class="pre">friend_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">friend_id</span></em>, <em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.Contact'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.friend_exist" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Получает id пользователя и id его возможного друга.
+Проверяет есть ли у пользователя в списке этот друг.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.get_contacts">
+<span class="sig-name descname"><span class="pre">get_contacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">db_1=&lt;class</span> <span class="pre">'server.Storage.Contact'&gt;</span></em>, <em class="sig-param"><span class="pre">db_2=&lt;class</span> <span class="pre">'server.Storage.User'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.get_contacts" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Возвращает список контактов пользователя</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.get_user_id">
+<span class="sig-name descname"><span class="pre">get_user_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.User'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.get_user_id" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Получает имя пользователя, возвращает его id или None</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.password_check">
+<span class="sig-name descname"><span class="pre">password_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">hash_password</span></em>, <em class="sig-param"><span class="pre">db=&lt;class</span> <span class="pre">'server.Storage.User'&gt;</span></em>, <em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.password_check" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Проверка пароля.
+Получает id пользователя и hash пароля, извлекает из БД hash, возвращает результат сравнения двух паролей</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="server.Storage.session">
+<span class="sig-name descname"><span class="pre">session</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;sqlalchemy.orm.session.Session</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#server.Storage.session" title="Ссылка на это определение">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="server.Storage.users_records_exist">
+<span class="sig-name descname"><span class="pre">users_records_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">engine=Engine(sqlite:///messenger_sqlite.db)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.Storage.users_records_exist" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Проверяет есть ли записи в таблице users, если нет, то первому юзеру назначает админа.
+id может быть не обязательно 1, т.к. до этого могли быть удаления юзеров админом и прочее</p>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.add_contact">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">add_contact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.add_contact" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Добавление контакта в список друзей с проверкой, что введен не собственный логин</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.authenticate">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">authenticate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ip</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.authenticate" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Аутентификация пользователя.
+Вызываются функции сравнения hash, записи в БД и другие.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.checking_data">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">checking_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_clients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ip</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_clients</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.checking_data" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Главная функция приложения, распределяющая сообщения по остальным функциям.
+Получает сообщение, разбирает его и запускает соответсвующую функцию</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.del_contact">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">del_contact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.del_contact" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Удаляет друга из контактов</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.get_contacts">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">get_contacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.get_contacts" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Получение списка контактов пользователя, запуская функцию из класса Storage</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.get_key">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">get_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">users_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.get_key" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Получает key словаря authorized_users для функции checking_data,
+для дальнейшего удаления этого ключа из списка подключенных пользователей</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.hash_pass">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">hash_pass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">salt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.hash_pass" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Получает имя пользователя в качестве соли и пароль.
+Возвращает преобразованный hash пароль.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.msg">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">msg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.msg" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Обрабатывает сообщения пользователей друг другу</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="server.write_responses">
+<span class="sig-prename descclassname"><span class="pre">server.</span></span><span class="sig-name descname"><span class="pre">write_responses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requests</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#server.write_responses" title="Ссылка на это определение">¶</a></dt>
+<dd><p>Высылает сообщения пользователю</p>
+</dd></dl>
+</section>
+
+
+          </article>
+        </div>
+      </div>
+    </main>
+  </div>
+  <footer class="md-footer">
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+          
+            <a href="client_1.html" title="client_1 module"
+               class="md-flex md-footer-nav__link md-footer-nav__link--prev"
+               rel="prev">
+              <div class="md-flex__cell md-flex__cell--shrink">
+                <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+              </div>
+              <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+                <span class="md-flex__ellipsis">
+                  <span
+                      class="md-footer-nav__direction"> Previous </span> client_1 module </span>
+              </div>
+            </a>
+          
+          
+        </a>
+        
+      </nav>
+    </div>
+    <div class="md-footer-meta md-typeset">
+      <div class="md-footer-meta__inner md-grid">
+        <div class="md-footer-copyright">
+          <div class="md-footer-copyright__highlight">
+              &#169; Copyright 2021, Vladimir_Novikov.
+              
+          </div>
+            Created using
+            <a href="http://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+             and
+            <a href="https://github.com/bashtage/sphinx-material/">Material for
+              Sphinx</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script src="_static/javascripts/application.js"></script>
+  <script>app.initialize({version: "1.0.4", url: {base: ".."}})</script>
+  </body>
+</html>
